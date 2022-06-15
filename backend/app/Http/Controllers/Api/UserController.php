@@ -17,7 +17,11 @@ class UserController extends Controller
      */
     public function index()
     {
-        return response(User::all(), 200);
+        try {
+            return response()->json(User::all(), 200);
+        } catch (\Exception $e) {
+            return response()->json('Can\'t get users', 500);
+        }
     }
 
     /**
@@ -38,14 +42,19 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        return User::create([
-            'name' => $request->get('name'),
-            'surname' => $request->get('surname'),
-            'email' => $request->get('email'),
-            'password' => Hash::make($request->get('password'))
-        ]) ?
-            response('All ok', 201) :
-            response('Not ok', 400);
+
+        try {
+            User::create([
+                'name' => $request->get('name'),
+                'surname' => $request->get('surname'),
+                'email' => $request->get('email'),
+                'password' => Hash::make($request->get('password'))
+            ]);
+
+            return response()->json('All ok', 201);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json('Not ok', 422);
+        }
     }
 
     /**
@@ -56,7 +65,11 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        return User::where('id', $id)->get();
+        try {
+            return response()->json(User::where('id', $id)->get(), 200);
+        } catch (\Exception $e) {
+            return response()->json('Can\'t get user', 500);
+        }
     }
 
     /**
@@ -79,16 +92,19 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::find($id);
+        try {
+            $user = User::find($id);
 
-        $request->get('name') ? $user->name = $request->get('name') : false;
-        $request->get('surname') ? $user->surname = $request->get('surname') : false;
-        $request->get('email') ? $user->email = $request->get('email') : false;
-        $request->get('password') ? $user->password = Hash::make($request->get('password')) : false;
+            $request->get('name') ? $user->name = $request->get('name') : false;
+            $request->get('surname') ? $user->surname = $request->get('surname') : false;
+            $request->get('email') ? $user->email = $request->get('email') : false;
+            $request->get('password') ? $user->password = Hash::make($request->get('password')) : false;
+            $user->save();
 
-        return $user->save() ?
-            response('Updated', 200) :
-            response('Didn\'t update', 400);
+            return response()->json('Updated', 200);
+        } catch (\Exception $e) {
+            return response()->json('Didn\'t update', 400);
+        }
     }
 
     /**
@@ -100,7 +116,7 @@ class UserController extends Controller
     public function destroy($id)
     {
         return User::find($id)->delete() ?
-            response('Deleted', 200) :
-            response('Didn\'t delete', 400);
+            response()->json('Deleted', 200) :
+            response()->json('Didn\'t delete', 400);
     }
 }
